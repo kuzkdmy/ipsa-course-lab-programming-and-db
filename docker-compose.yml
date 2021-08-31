@@ -1,0 +1,21 @@
+version: "3"
+services:
+  postgres_tourism:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=magic
+      - POSTGRES_DB=tourism
+    ports:
+      - 15432:5432
+  migration_tourism:
+    image: boxfuse/flyway:latest
+    container_name: flyway_migration
+    volumes:
+      - ./src/main/resources/migrations:/flyway/sql
+      - ./bin:/flyway/bin
+    entrypoint: ["bash", "/flyway/bin/wait-for-it.sh", "postgres_tourism:5432", "--", "flyway"]
+    command: -url=jdbc:postgresql://postgres_tourism/tourism -schemas=public -user=root -password=magic migrate
+    depends_on:
+      - postgres_tourism
