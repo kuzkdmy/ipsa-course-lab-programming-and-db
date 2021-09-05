@@ -1,3 +1,3 @@
 delete
-from ref_hotel_stars_categories
+from hotel_starts_categories
 where true;

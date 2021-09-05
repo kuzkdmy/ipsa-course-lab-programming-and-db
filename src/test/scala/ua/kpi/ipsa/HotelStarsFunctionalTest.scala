@@ -1,34 +1,16 @@
 package ua.kpi.ipsa
 
-import doobie.Update0
-import doobie.implicits._
-import doobie.util.transactor.Transactor
-import org.slf4j.LoggerFactory
-import sttp.capabilities.WebSockets
-import sttp.capabilities.zio.ZioStreams
+import sttp.client3.Response
 import sttp.client3.asynchttpclient.zio.AsyncHttpClientZioBackend
 import sttp.client3.quick._
-import sttp.client3.{Response, SttpBackend}
 import ua.kpi.ipsa.MainApp.appLayer
 import ua.kpi.ipsa.dto.{ApiCreateHotelStarCategory, ApiHotelStarCategory, ApiUpdateHotelStarCategory}
 import zio._
-import zio.duration.durationInt
-import zio.interop.catz._
 import zio.json._
 import zio.test.Assertion.equalTo
-import zio.test.{DefaultRunnableSpec, TestAspect, assert}
+import zio.test.assert
 
-import scala.util.Try
-
-object FunctionalTest extends DefaultRunnableSpec {
-
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
-  override def aspects: List[TestAspect[Nothing, _root_.zio.test.environment.TestEnvironment, Nothing, Any]] =
-    List(TestAspect.timeoutWarning(10.seconds), TestAspect.timeout(20.seconds), TestAspect.sequential)
-
-  type Backend = SttpBackend[Task, ZioStreams with WebSockets]
-  private val c = quickRequest
+object HotelStarsFunctionalTest extends BaseFunTest {
 
   override def spec = suite("Hotel Stars Management")(
     testM("check create") {
@@ -103,23 +85,5 @@ object FunctionalTest extends DefaultRunnableSpec {
     ZIO.fromEither(response.body.fromJson[ApiHotelStarCategory].left.map(_ => s"failed construct from: ${response}"))
   private def asHotelList(response: Response[String]): IO[String, List[ApiHotelStarCategory]] =
     ZIO.fromEither(response.body.fromJson[List[ApiHotelStarCategory]].left.map(_ => s"failed construct from: ${response}"))
-
-  private def evalDb(fileName: String): RManaged[Has[Transactor[Task]], Int] = {
-    for {
-      rawSql <- loadContent(fileName)
-      tx     <- ZIO.service[Transactor[Task]].toManaged_
-      res    <- Update0(rawSql, None).run.transact(tx).toManaged_
-    } yield res
-  }
-
-  private def loadContent(fileName: String): TaskManaged[String] = {
-    ZManaged
-      .fromAutoCloseable(ZIO(Thread.currentThread().getContextClassLoader.getResourceAsStream(fileName)))
-      .flatMap(source => ZManaged.fromTry(Try(scala.io.Source.fromInputStream(source).mkString)))
-      .tapError(err => {
-        logger.error(s"Failed to load file : $fileName", err)
-        ZManaged.fail(err)
-      })
-  }
 
 }

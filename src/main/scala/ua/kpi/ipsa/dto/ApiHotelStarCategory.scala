@@ -1,6 +1,6 @@
 package ua.kpi.ipsa.dto
 
-case class ApiHotelStarCategory(id: Int, stars: Int, description: String, region: String)
+case class ApiHotelStarCategory(id: Long, stars: Int, description: String, region: String)
 object ApiHotelStarCategory {
   import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
   implicit val decoder: JsonDecoder[ApiHotelStarCategory] = DeriveJsonDecoder.gen[ApiHotelStarCategory]

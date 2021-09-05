@@ -12,6 +12,7 @@ case class Ctx(requestId: String)
 // variant with Scala 3 contextual functions is not bad, but Scala 3 support from Intellij is horrible now
 // so stay with 2 implicit
 // anyway any choice is dramatically invasive and all application code start depend on it, as for me now implicit wins
+// zio 2 did a lot of changes related to logs, need to check what it will be
 object log {
   private def ctxMsg(ctx: Ctx, m: => String): String = s"x-request-id:[${ctx.requestId}] - $m"
 
