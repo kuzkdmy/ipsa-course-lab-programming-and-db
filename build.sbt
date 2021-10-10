@@ -33,8 +33,7 @@ lazy val root = (project in file("."))
       "org.tpolecat"                  %% "doobie-core"                   % "1.0.0-RC1",
       "org.tpolecat"                  %% "doobie-hikari"                 % "1.0.0-RC1",
       "org.tpolecat"                  %% "doobie-postgres"               % "1.0.0-RC1",
-      "tf.tofu"                       %% "derevo-cats"                   % "0.12.6",
-      "tf.tofu"                       %% "derevo-circe"                  % "0.12.6"
+      "tf.tofu"                       %% "derevo-cats"                   % "0.12.6"
     ),
     scalacOptions ++= Seq(
       "-Wconf:src=src_managed/.*:silent",
