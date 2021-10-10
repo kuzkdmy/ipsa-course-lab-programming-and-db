@@ -8,7 +8,7 @@ import sttp.tapir.swagger.ziohttp.SwaggerZioHttp
 import ua.kpi.ipsa.config.AppConfig
 import ua.kpi.ipsa.repository.{DBLayer, HotelStarsRepositoryLive, LocationRepositoryLive, TravelAgentRepositoryLive}
 import ua.kpi.ipsa.route.middleware.{ServerOptionsService, ServerOptionsServiceLive}
-import ua.kpi.ipsa.route.{HotelStarsRoute, LocationRoute, TravelAgentRoute}
+import ua.kpi.ipsa.route._
 import ua.kpi.ipsa.service.{HotelStarsServiceLive, LocationServiceLive, TravelAgentServiceLive}
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server}
@@ -29,6 +29,8 @@ object MainApp extends App {
     DBLayer.live >+> LocationRepositoryLive.layer >+> HotelStarsRepositoryLive.layer >+> TravelAgentRepositoryLive.layer >+>
     // service layers
     LocationServiceLive.layer >+> HotelStarsServiceLive.layer >+> TravelAgentServiceLive.layer >+>
+    // routes access service layers
+    LocationRouteServiceLive.layer >+> HotelStarsRouteServiceLive.layer >+> TravelAgentRouteServiceLive.layer >+>
     // zio-http layers
     ServerOptionsServiceLive.layer >+> EventLoopGroup.auto() >+> ServerChannelFactory.auto
   // format: on

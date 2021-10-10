@@ -1,38 +1,38 @@
 package ua.kpi.ipsa.dto
 
+import ua.kpi.ipsa.domain.types._
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 case class ApiTravelAgent(
-    id: Long,
-    name: String,
+    id: TravelAgentId,
+    name: TravelAgentName,
     locations: Set[ApiLocation],
-    photos: List[String],
+    photos: List[TravelAgentPhoto],
     hotelStarCategory: Set[ApiHotelStarCategory]
 )
 object ApiTravelAgent {
-  import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
   implicit val decoder: JsonDecoder[ApiTravelAgent] = DeriveJsonDecoder.gen[ApiTravelAgent]
   implicit val encoder: JsonEncoder[ApiTravelAgent] = DeriveJsonEncoder.gen[ApiTravelAgent]
 }
 
 case class ApiUpdateTravelAgent(
-    name: String,
-    locations: Set[Long],
-    photos: List[String],
-    hotelStarCategories: Set[Long]
+    name: TravelAgentName,
+    locations: Set[LocationId],
+    photos: List[TravelAgentPhoto],
+    hotelStarCategories: Set[HotelStarCategoryId]
 )
 object ApiUpdateTravelAgent {
-  import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
   implicit val decoder: JsonDecoder[ApiUpdateTravelAgent] = DeriveJsonDecoder.gen[ApiUpdateTravelAgent]
   implicit val encoder: JsonEncoder[ApiUpdateTravelAgent] = DeriveJsonEncoder.gen[ApiUpdateTravelAgent]
 }
 
 case class ApiCreateTravelAgent(
-    name: String,
-    photos: List[String],
-    locations: Set[Long],
-    hotelStarCategories: Set[Long]
+    name: TravelAgentName,
+    photos: List[TravelAgentPhoto],
+    locations: Set[LocationId],
+    hotelStarCategories: Set[HotelStarCategoryId]
 )
 object ApiCreateTravelAgent {
-  import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
   implicit val decoder: JsonDecoder[ApiCreateTravelAgent] = DeriveJsonDecoder.gen[ApiCreateTravelAgent]
   implicit val encoder: JsonEncoder[ApiCreateTravelAgent] = DeriveJsonEncoder.gen[ApiCreateTravelAgent]
 }

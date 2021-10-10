@@ -1,9 +1,15 @@
 package ua.kpi.ipsa.trace
 
-import org.slf4j.Logger
+import cats.Show
+import org.slf4j.{Logger, MDC}
 import zio.UIO
 
+import scala.jdk.CollectionConverters._
+
 case class Ctx(requestId: String)
+object Ctx {
+  implicit val show: Show[Ctx] = (t: Ctx) => s"""{"x-request-id": ${t.requestId}"""
+}
 
 // I hesitate a lot about usage of
 // zio logger <- don't see how to force use correct classname in all the places,
@@ -14,16 +20,23 @@ case class Ctx(requestId: String)
 // anyway any choice is dramatically invasive and all application code start depend on it, as for me now implicit wins
 // zio 2 did a lot of changes related to logs, need to check what it will be
 object log {
-  private def ctxMsg(ctx: Ctx, m: => String): String = s"x-request-id:[${ctx.requestId}] - $m"
+  private def ctxLog(logFn: => Unit)(implicit ctx: Ctx): Unit = {
+    try {
+      MDC.setContextMap(Map("x-request-id" -> ctx.requestId).asJava)
+      logFn
+    } finally {
+      MDC.clear()
+    }
+  }
 
-  def error(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(l.error(ctxMsg(ctx, msg)))
-  def warn(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]                = UIO(l.warn(ctxMsg(ctx, msg)))
-  def info(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]                = UIO(l.info(ctxMsg(ctx, msg)))
-  def debug(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(l.debug(ctxMsg(ctx, msg)))
-  def trace(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(l.trace(ctxMsg(ctx, msg)))
-  def error(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(l.error(ctxMsg(ctx, msg), t))
-  def warn(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit]  = UIO(l.warn(ctxMsg(ctx, msg), t))
-  def info(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit]  = UIO(l.info(ctxMsg(ctx, msg), t))
-  def debug(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(l.debug(ctxMsg(ctx, msg), t))
-  def trace(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(l.trace(ctxMsg(ctx, msg), t))
+  def error(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(ctxLog(l.error(msg)))
+  def warn(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]                = UIO(ctxLog(l.warn(msg)))
+  def info(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]                = UIO(ctxLog(l.info(msg)))
+  def debug(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(ctxLog(l.debug(msg)))
+  def trace(msg: => String)(implicit ctx: Ctx, l: Logger): UIO[Unit]               = UIO(ctxLog(l.trace(msg)))
+  def error(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(ctxLog(l.error(msg, t)))
+  def warn(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit]  = UIO(ctxLog(l.warn(msg, t)))
+  def info(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit]  = UIO(ctxLog(l.info(msg, t)))
+  def debug(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(ctxLog(l.debug(msg, t)))
+  def trace(msg: => String, t: Throwable)(implicit ctx: Ctx, l: Logger): UIO[Unit] = UIO(ctxLog(l.trace(msg, t)))
 }

@@ -6,20 +6,17 @@ import cats.syntax.option._
 import doobie.Transactor
 import org.slf4j.LoggerFactory
 import ua.kpi.ipsa.domain.filter.{ListHotelCategoriesFilter, ListLocationsFilter, ListTravelAgentFilter}
-import ua.kpi.ipsa.domain.{HotelStarCategory, Location}
-import ua.kpi.ipsa.dto.filter.ApiListTravelAgentsFilter
-import ua.kpi.ipsa.dto.{ApiCreateTravelAgent, ApiTravelAgent, ApiUpdateTravelAgent}
+import ua.kpi.ipsa.domain.{HotelStarCategory, Location, TravelAgent, TravelAgentRepr}
 import ua.kpi.ipsa.repository.{HotelStarsRepository, LocationRepository, TranzactIO, TravelAgentRepository}
-import ua.kpi.ipsa.route.{Conflict, NotFound}
-import ua.kpi.ipsa.trace.{Ctx, log}
+import ua.kpi.ipsa.trace.{log, Ctx}
 import zio._
 
 trait TravelAgentService {
-  def create(cmd: ApiCreateTravelAgent)(implicit ctx: Ctx): Task[Either[Conflict, ApiTravelAgent]]
-  def get(id: Long)(implicit ctx: Ctx): Task[Either[NotFound, ApiTravelAgent]]
-  def list(filter: ApiListTravelAgentsFilter)(implicit ctx: Ctx): Task[Either[Unit, List[ApiTravelAgent]]]
-  def delete(id: Long)(implicit ctx: Ctx): Task[Either[NotFound, Unit]]
-  def update(id: Long, cmd: ApiUpdateTravelAgent)(implicit ctx: Ctx): Task[Either[NotFound, ApiTravelAgent]]
+  def create(cmd: TravelAgentRepr)(implicit ctx: Ctx): Task[TravelAgent]
+  def get(id: Long)(implicit ctx: Ctx): Task[Option[TravelAgent]]
+  def list(filter: ListTravelAgentFilter)(implicit ctx: Ctx): Task[List[TravelAgent]]
+  def delete(id: Long)(implicit ctx: Ctx): Task[Option[TravelAgent]]
+  def update(cmd: TravelAgentRepr)(implicit ctx: Ctx): Task[Option[TravelAgent]]
 }
 object TravelAgentService extends Accessible[TravelAgentService]
 
@@ -31,54 +28,42 @@ case class TravelAgentServiceLive(
 ) extends TravelAgentService {
   implicit private val logger: org.slf4j.Logger = LoggerFactory.getLogger(this.getClass)
 
-  override def create(cmd: ApiCreateTravelAgent)(implicit ctx: Ctx): Task[Either[Conflict, ApiTravelAgent]] = {
-    val program = for {
+  override def create(cmd: TravelAgentRepr)(implicit ctx: Ctx): Task[TravelAgent] = withTx {
+    for {
       _   <- log.info(s"call create travel agent $cmd")
-      id  <- agentRepo.create(ApiConverter.toCreateTravelAgent(cmd))
+      id  <- agentRepo.create(cmd)
       res <- queryList(ListTravelAgentFilter(ids = NonEmptyList.of(id).some))
-    } yield res.headOption match {
-      case Some(res) => Right(res)
-      case None      => Left(Conflict(s"fail to query just created travel agent with id:$id"))
-    }
-    program.provideLayer(ZLayer.succeed(tx))
+    } yield res.headOption.get
   }
-  override def get(id: Long)(implicit ctx: Ctx): Task[Either[NotFound, ApiTravelAgent]] = {
-    val program = for {
+  override def get(id: Long)(implicit ctx: Ctx): Task[Option[TravelAgent]] = withTx {
+    for {
       _   <- log.info(s"call get travel agent by id $id")
       res <- queryList(ListTravelAgentFilter(ids = NonEmptyList.of(id).some))
-    } yield res.headOption match {
-      case Some(res) => Right(res)
-      case None      => Left(notFound(id))
-    }
-    program.provideLayer(ZLayer.succeed(tx))
+    } yield res.headOption
   }
-  override def list(filter: ApiListTravelAgentsFilter)(implicit ctx: Ctx): Task[Either[Unit, List[ApiTravelAgent]]] = {
-    val program = for {
+  override def list(filter: ListTravelAgentFilter)(implicit ctx: Ctx): Task[List[TravelAgent]] = withTx {
+    for {
       _   <- log.info("call list travel agent")
-      res <- queryList(ApiConverter.toDomainFilter(filter))
-    } yield Right(res)
-    program.provideLayer(ZLayer.succeed(tx))
+      res <- queryList(filter)
+    } yield res
   }
-  override def delete(id: Long)(implicit ctx: Ctx): Task[Either[NotFound, Unit]] = {
-    log.info(s"call delete travel agent id $id") *>
-      agentRepo.delete(id).provideLayer(ZLayer.succeed(tx)) map { deleteCount =>
-        if (deleteCount < 1) Left(notFound(id)) else Right(())
-      }
+  override def delete(id: Long)(implicit ctx: Ctx): Task[Option[TravelAgent]] = withTx {
+    for {
+      _   <- log.info(s"call delete travel agent id $id")
+      res <- queryList(ListTravelAgentFilter(ids = NonEmptyList.of(id).some)).map(_.headOption)
+      _   <- ZIO.when(res.nonEmpty)(agentRepo.delete(id))
+    } yield res
   }
-  override def update(id: Long, cmd: ApiUpdateTravelAgent)(implicit ctx: Ctx): Task[Either[NotFound, ApiTravelAgent]] = {
-    val program = for {
+  override def update(cmd: TravelAgentRepr)(implicit ctx: Ctx): Task[Option[TravelAgent]] = withTx {
+    for {
       _           <- log.info(s"call update travel agent category ${cmd}")
-      updateCount <- agentRepo.update(ApiConverter.toUpdateTravelAgent(id, cmd))
-      res <- if (updateCount > 0) queryList(ListTravelAgentFilter(ids = NonEmptyList.of(id).some))
+      updateCount <- agentRepo.update(cmd)
+      res <- if (updateCount > 0) queryList(ListTravelAgentFilter(ids = NonEmptyList.of(cmd.agent.id).some))
              else Task.succeed(List.empty)
-    } yield res.headOption match {
-      case Some(res) => Right(res)
-      case None      => Left(notFound(id))
-    }
-    program.provideLayer(ZLayer.succeed(tx))
+    } yield res.headOption
   }
 
-  private def queryList(filter: ListTravelAgentFilter)(implicit ctx: Ctx): TranzactIO[List[ApiTravelAgent]] = {
+  private def queryList(filter: ListTravelAgentFilter)(implicit ctx: Ctx): TranzactIO[List[TravelAgent]] = {
     for {
       dbRows <- agentRepo.list(filter)
       locations <- dbRows.flatMap(_.locations).toNel match {
@@ -93,16 +78,18 @@ case class TravelAgentServiceLive(
       val locationMap  = locations.map(e => (e.id, e)).toMap
       val hotelCatsMap = hotelCategories.map(e => (e.id, e)).toMap
       dbRows.map(dbR =>
-        ApiConverter.toApiTravelAgent(
-          dbR.agent,
-          dbR.locations.flatMap(locationMap.get).toList,
-          dbR.hotelStarCategories.flatMap(hotelCatsMap.get).toList
+        TravelAgent(
+          id                = dbR.agent.id,
+          name              = dbR.agent.name,
+          locations         = dbR.locations.flatMap(locationMap.get).toList,
+          photos            = dbR.agent.photos,
+          hotelStarCategory = dbR.hotelStarCategories.flatMap(hotelCatsMap.get).toList
         )
       )
     }
   }
-
-  private def notFound(id: Long) = NotFound(s"travel agent id:$id not found")
+  private def withTx[R, E, A](program: ZIO[Has[Transactor[Task]], E, A]): ZIO[R, E, A] =
+    program.provideLayer(ZLayer.succeed(tx))
 }
 
 object TravelAgentServiceLive {

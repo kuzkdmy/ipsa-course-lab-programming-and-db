@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.out</target>
-        <encoder>
-            <pattern>%highlight[%level] [%green(%date{ISO8601})] [%yellow(%thread)] %magenta(%logger{16}): %msg %n
-            </pattern>
-        </encoder>
-    </appender>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+        <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+            <maxDepthPerThrowable>30</maxDepthPerThrowable>
+            <maxLength>2048</maxLength>
+            <shortenedClassNameLength>20</shortenedClassNameLength>
+            <exclude>sun\.reflect\..*\.invoke.*</exclude>
+            <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+            <rootCauseFirst>true</rootCauseFirst>
+            <inlineHash>true</inlineHash>
+        </throwableConverter>
+        <includeMdcKeyName>x-request-id</includeMdcKeyName>
+        <fieldNames>
+            <timestamp>@timestamp</timestamp>
+            <level>level</level>
+            <logger>logger</logger>
+            <thread>thread</thread>
+            <message>message</message>
+            <levelValue>[ignore]</levelValue>
+            <version>[ignore]</version>
+            <stackTrace>stacktrace</stackTrace>
+        </fieldNames>
+    </encoder>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

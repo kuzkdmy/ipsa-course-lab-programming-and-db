@@ -8,13 +8,14 @@ lazy val root = (project in file("."))
     addCompilerPlugin("org.typelevel" % "kind-projector"     % "0.13.0" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy"   %% "better-monadic-for" % "0.3.1"),
     libraryDependencies ++= Seq(
-      "ch.qos.logback"                 % "logback-classic"               % "1.2.5",
       "com.beachape"                  %% "enumeratum-doobie"             % "1.7.0",
       "com.github.pureconfig"         %% "pureconfig"                    % "0.16.0",
       "com.softwaremill.sttp.client3" %% "async-http-client-backend-zio" % "3.3.13",
       "com.softwaremill.sttp.tapir"   %% "tapir-core"                    % "0.19.0-M8",
+      "com.softwaremill.sttp.tapir"   %% "tapir-derevo"                  % "0.19.0-M8",
       "com.softwaremill.sttp.tapir"   %% "tapir-enumeratum"              % "0.19.0-M8",
       "com.softwaremill.sttp.tapir"   %% "tapir-json-zio"                % "0.19.0-M8",
+      "com.softwaremill.sttp.tapir"   %% "tapir-newtype"                 % "0.19.0-M8",
       "com.softwaremill.sttp.tapir"   %% "tapir-openapi-circe-yaml"      % "0.19.0-M8",
       "com.softwaremill.sttp.tapir"   %% "tapir-openapi-docs"            % "0.19.0-M8",
       "com.softwaremill.sttp.tapir"   %% "tapir-prometheus-metrics"      % "0.19.0-M8",
@@ -27,10 +28,13 @@ lazy val root = (project in file("."))
       "dev.zio"                       %% "zio-test"                      % "1.0.11" % "test",
       "dev.zio"                       %% "zio-test-sbt"                  % "1.0.11" % "test",
       "io.d11"                        %% "zhttp"                         % "1.0.0.0-RC17",
+      "net.logstash.logback"           % "logstash-logback-encoder"      % "6.6",
       "org.postgresql"                 % "postgresql"                    % "42.2.23",
       "org.tpolecat"                  %% "doobie-core"                   % "1.0.0-RC1",
       "org.tpolecat"                  %% "doobie-hikari"                 % "1.0.0-RC1",
-      "org.tpolecat"                  %% "doobie-postgres"               % "1.0.0-RC1"
+      "org.tpolecat"                  %% "doobie-postgres"               % "1.0.0-RC1",
+      "tf.tofu"                       %% "derevo-cats"                   % "0.12.6",
+      "tf.tofu"                       %% "derevo-circe"                  % "0.12.6"
     ),
     scalacOptions ++= Seq(
       "-Wconf:src=src_managed/.*:silent",

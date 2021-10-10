@@ -4,6 +4,7 @@ import sttp.client3.Response
 import sttp.client3.asynchttpclient.zio.AsyncHttpClientZioBackend
 import sttp.client3.quick._
 import ua.kpi.ipsa.MainApp.appLayer
+import ua.kpi.ipsa.domain.types.LocationName
 import ua.kpi.ipsa.dto.{ApiCreateLocation, ApiLocation, ApiLocationType, ApiUpdateLocation}
 import zio._
 import zio.json._
@@ -19,17 +20,17 @@ object LocationsFunctionalTest extends BaseFunTest {
         b <- AsyncHttpClientZioBackend().toManaged_
       } yield {
         for {
-          createdRegion  <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("North America", ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
-          createdCountry <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("USA", ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
-          createdCity    <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("New York", ApiLocationType.City, Some(createdCountry.id)).toJson).send(b).flatMap(asLocation)
+          createdRegion  <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("North America"), ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
+          createdCountry <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("USA"), ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
+          createdCity    <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("New York"), ApiLocationType.City, Some(createdCountry.id)).toJson).send(b).flatMap(asLocation)
         } yield {
-          assert(createdRegion.name)(equalTo("North America")) &&
+          assert(createdRegion.name)(equalTo(LocationName("North America"))) &&
           assert(createdRegion.locationType)(equalTo(ApiLocationType.Region)) &&
           assert(createdRegion.parentLocationId.isEmpty)(equalTo(true)) &&
-          assert(createdCountry.name)(equalTo("USA")) &&
+          assert(createdCountry.name)(equalTo(LocationName("USA"))) &&
           assert(createdCountry.locationType)(equalTo(ApiLocationType.Country)) &&
           assert(createdCountry.parentLocationId)(equalTo(Some(createdRegion.id))) &&
-          assert(createdCity.name)(equalTo("New York")) &&
+          assert(createdCity.name)(equalTo(LocationName("New York"))) &&
           assert(createdCity.locationType)(equalTo(ApiLocationType.City)) &&
           assert(createdCity.parentLocationId)(equalTo(Some(createdCountry.id)))
         }
@@ -43,7 +44,7 @@ object LocationsFunctionalTest extends BaseFunTest {
       } yield {
         for {
           notFound <- c.get(uri"http://localhost:8093/api/v1.0/location/123").send(b)
-          created  <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("North America", ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
+          created  <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("North America"), ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
           loaded   <- c.get(uri"http://localhost:8093/api/v1.0/location/${created.id}").send(b).flatMap(asLocation)
         } yield {
           assert(notFound.statusText)(equalTo("Not Found")) &&
@@ -59,7 +60,7 @@ object LocationsFunctionalTest extends BaseFunTest {
       } yield {
         for {
           emptyList    <- c.get(uri"http://localhost:8093/api/v1.0/location").send(b)
-          created      <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("North America", ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
+          created      <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("North America"), ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
           nonEmptyList <- c.get(uri"http://localhost:8093/api/v1.0/location").send(b).flatMap(asLocationsList)
         } yield {
           assert(emptyList.statusText)(equalTo("OK")) &&
@@ -75,15 +76,15 @@ object LocationsFunctionalTest extends BaseFunTest {
         b <- AsyncHttpClientZioBackend().toManaged_
       } yield {
         for {
-          notFoundUpdate      <- c.put(uri"http://localhost:8093/api/v1.0/location/123").body(ApiUpdateLocation("North America", ApiLocationType.Region, None).toJson).send(b)
-          createdRegion       <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("North America", ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
-          createdUsa          <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("USA", ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
-          createdCanada       <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("Canada", ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
-          createdCityInUsa    <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation("City", ApiLocationType.City, Some(createdUsa.id)).toJson).send(b).flatMap(asLocation)
-          updatedCityInCanada <- c.put(uri"http://localhost:8093/api/v1.0/location/${createdCityInUsa.id}").body(ApiUpdateLocation("City Changed", ApiLocationType.City, Some(createdCanada.id)).toJson).send(b).flatMap(asLocation)
+          notFoundUpdate      <- c.put(uri"http://localhost:8093/api/v1.0/location/123").body(ApiUpdateLocation(LocationName("North America"), ApiLocationType.Region, None).toJson).send(b)
+          createdRegion       <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("North America"), ApiLocationType.Region, None).toJson).send(b).flatMap(asLocation)
+          createdUsa          <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("USA"), ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
+          createdCanada       <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("Canada"), ApiLocationType.Country, Some(createdRegion.id)).toJson).send(b).flatMap(asLocation)
+          createdCityInUsa    <- c.post(uri"http://localhost:8093/api/v1.0/location").body(ApiCreateLocation(LocationName("City"), ApiLocationType.City, Some(createdUsa.id)).toJson).send(b).flatMap(asLocation)
+          updatedCityInCanada <- c.put(uri"http://localhost:8093/api/v1.0/location/${createdCityInUsa.id}").body(ApiUpdateLocation(LocationName("City Changed"), ApiLocationType.City, Some(createdCanada.id)).toJson).send(b).flatMap(asLocation)
         } yield {
           assert(notFoundUpdate.statusText)(equalTo("Not Found")) &&
-          assert(updatedCityInCanada.name)(equalTo("City Changed")) &&
+          assert(updatedCityInCanada.name)(equalTo(LocationName("City Changed"))) &&
           assert(updatedCityInCanada.locationType)(equalTo(ApiLocationType.City)) &&
           assert(updatedCityInCanada.parentLocationId)(equalTo(Some(createdCanada.id)))
         }
