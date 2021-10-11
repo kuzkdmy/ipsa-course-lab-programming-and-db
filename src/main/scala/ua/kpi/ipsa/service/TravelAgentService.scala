@@ -1,6 +1,7 @@
 package ua.kpi.ipsa.service
 
 import cats.data.NonEmptyList
+import cats.implicits.toShow
 import cats.syntax.list._
 import cats.syntax.option._
 import doobie.Transactor
@@ -8,7 +9,7 @@ import org.slf4j.LoggerFactory
 import ua.kpi.ipsa.domain.filter.{ListHotelCategoriesFilter, ListLocationsFilter, ListTravelAgentFilter}
 import ua.kpi.ipsa.domain.{HotelStarCategory, Location, TravelAgent, TravelAgentRepr}
 import ua.kpi.ipsa.repository.{HotelStarsRepository, LocationRepository, TranzactIO, TravelAgentRepository}
-import ua.kpi.ipsa.trace.{log, Ctx}
+import ua.kpi.ipsa.trace.{Ctx, log}
 import zio._
 
 trait TravelAgentService {
@@ -43,7 +44,7 @@ case class TravelAgentServiceLive(
   }
   override def list(filter: ListTravelAgentFilter)(implicit ctx: Ctx): Task[List[TravelAgent]] = withTx {
     for {
-      _   <- log.info("call list travel agent")
+      _   <- log.info(s"call list travel agent ${filter.show}")
       res <- queryList(filter)
     } yield res
   }
@@ -66,11 +67,11 @@ case class TravelAgentServiceLive(
   private def queryList(filter: ListTravelAgentFilter)(implicit ctx: Ctx): TranzactIO[List[TravelAgent]] = {
     for {
       dbRows <- agentRepo.list(filter)
-      locations <- dbRows.flatMap(_.locations).toNel match {
+      locations <- dbRows.flatMap(_.locations).distinct.toNel match {
                      case Some(lIds) => locationRepo.list(ListLocationsFilter(ids = lIds.some))
                      case None       => ZIO(List.empty[Location])
                    }
-      hotelCategories <- dbRows.flatMap(_.hotelStarCategories).toNel match {
+      hotelCategories <- dbRows.flatMap(_.hotelStarCategories).distinct.toNel match {
                            case Some(lIds) => categoriesRepo.list(ListHotelCategoriesFilter(ids = lIds.some))
                            case None       => ZIO(List.empty[HotelStarCategory])
                          }

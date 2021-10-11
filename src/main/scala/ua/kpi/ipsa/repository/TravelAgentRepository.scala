@@ -1,13 +1,15 @@
 package ua.kpi.ipsa.repository
 
 import cats.data.NonEmptyList
+import cats.implicits.toFoldableOps
 import cats.syntax.list._
 import cats.syntax.option._
 import doobie.Update
 import doobie.free.connection
 import doobie.implicits._
 import doobie.postgres.implicits._
-import doobie.util.fragments.{in, whereAndOpt}
+import doobie.util.fragment.Fragment.const
+import doobie.util.fragments.{and, in, whereAndOpt}
 import ua.kpi.ipsa.domain.filter.ListTravelAgentFilter
 import ua.kpi.ipsa.domain.{TravelAgentQueryListRow, TravelAgentRepr, TravelAgentRow}
 import ua.kpi.ipsa.trace.Ctx
@@ -35,14 +37,22 @@ case class TravelAgentRepositoryLive() extends TravelAgentRepository {
 
   override def list(filter: ListTravelAgentFilter)(implicit ctx: Ctx): TranzactIO[List[TravelAgentRepr]] = {
     val filterFragment = whereAndOpt(
-      filter.ids.map(ids => in(fr"t.id", ids))
+      filter.ids.map(e => in(fr"t.id", e)),
+      filter.namesIn.map(e => in(fr"lower(t.name)", e.map(_.toLowerCase))),
+      filter.countriesIn.map(e => and(fr"l.location_type='country'", in(fr"lower(l.name)", e.map(_.toLowerCase)))),
+      filter.citiesIn.map(e => and(fr"l.location_type='city'", in(fr"lower(l.name)", e.map(_.toLowerCase)))),
+      filter.photosIn.map(e => fr"lower(t.photos::text)::text[] && " ++ fr0"'{" ++ const(e.toList.intercalate(",")) ++ fr"}'"),
+      filter.hotelStarsIn.map(e => in(fr"s.stars", e))
     )
     tzio {
       for {
         ids <- (sql"""SELECT distinct t.id FROM travel_agent t
                       LEFT JOIN travel_agent_categories tc ON t.id = tc.travel_agent_id
-                      LEFT JOIN travel_agent_locations tl ON t.id = tl.travel_agent_id """ ++
-                 filterFragment ++ fr" ORDER BY t.id " ++ filter.limit.map(l => fr"LIMIT $l").getOrElse(fr""))
+                      LEFT JOIN travel_agent_locations tl ON t.id = tl.travel_agent_id
+                      LEFT JOIN locations l ON l.id = tl.location_id
+                      LEFT JOIN hotel_starts_categories s ON s.id = tc.hotel_star_category_id
+                      """ ++
+                 filterFragment ++ fr" ORDER BY t.id " ++ filter.queryLimit.map(l => fr"LIMIT $l").getOrElse(fr""))
                  .query[Long]
                  .to[Set]
         dataTups <- (sql"""SELECT t.id, t.name, t.photos, tc.hotel_star_category_id, tl.location_id FROM travel_agent t
@@ -63,14 +73,15 @@ case class TravelAgentRepositoryLive() extends TravelAgentRepository {
                       name   = nel.head.name,
                       photos = nel.head.photos
                     ),
-                    locations           = nel.toList.map(_.locationId).toSet,
-                    hotelStarCategories = nel.toList.map(_.hotelCategoryId).toSet
+                    locations           = nel.toList.flatMap(_.locationId).toSet,
+                    hotelStarCategories = nel.toList.flatMap(_.hotelCategoryId).toSet
                   )
                 )
               case None => Nil
             }
           }
           .flatten
+          .sortBy(_.agent.id)
       }
     }
   }

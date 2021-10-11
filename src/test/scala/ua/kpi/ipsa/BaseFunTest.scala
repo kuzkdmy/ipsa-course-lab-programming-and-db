@@ -7,11 +7,12 @@ import org.slf4j.{Logger, LoggerFactory}
 import sttp.capabilities.WebSockets
 import sttp.capabilities.zio.ZioStreams
 import sttp.client3.quick.quickRequest
-import sttp.client3.{Empty, RequestT, SttpBackend}
+import sttp.client3.{Empty, RequestT, Response, SttpBackend}
 import zio.duration.durationInt
 import zio.interop.catz._
+import zio.json.{DecoderOps, JsonDecoder}
 import zio.test.{DefaultRunnableSpec, TestAspect}
-import zio.{Has, RManaged, Schedule, Task, TaskManaged, ZIO, ZManaged}
+import zio.{Has, IO, RManaged, Schedule, Task, TaskManaged, ZIO, ZManaged}
 
 import scala.util.Try
 
@@ -43,4 +44,7 @@ trait BaseFunTest extends DefaultRunnableSpec {
         ZManaged.fail(err)
       })
   }
+
+  def as[T](response: Response[String])(implicit A: JsonDecoder[T]): IO[String, T] =
+    ZIO.fromEither(response.body.fromJson[T].left.map(_ => s"failed construct from: ${response}"))
 }

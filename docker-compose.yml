@@ -9,6 +9,7 @@ services:
       - POSTGRES_DB=tourism
     ports:
       - 15432:5432
+    command: ["postgres", "-c", "log_statement=all"]
   migration_tourism:
     image: boxfuse/flyway:latest
     container_name: flyway_migration

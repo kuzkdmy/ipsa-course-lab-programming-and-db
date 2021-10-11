@@ -8,6 +8,7 @@ lazy val root = (project in file("."))
     addCompilerPlugin("org.typelevel" % "kind-projector"     % "0.13.0" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy"   %% "better-monadic-for" % "0.3.1"),
     libraryDependencies ++= Seq(
+      "ch.qos.logback"                 % "logback-classic"               % "1.2.3",
       "com.beachape"                  %% "enumeratum-doobie"             % "1.7.0",
       "com.github.pureconfig"         %% "pureconfig"                    % "0.16.0",
       "com.softwaremill.sttp.client3" %% "async-http-client-backend-zio" % "3.3.13",

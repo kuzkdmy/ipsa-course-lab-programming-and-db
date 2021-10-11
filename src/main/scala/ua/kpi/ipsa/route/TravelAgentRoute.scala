@@ -7,8 +7,9 @@ import sttp.tapir.codec.newtype._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.zio._
 import sttp.tapir.server.ziohttp.ZioHttpInterpreter
-import ua.kpi.ipsa.domain.types.{QueryLimit, TravelAgentId}
-import ua.kpi.ipsa.dto.{ApiCreateTravelAgent, ApiTravelAgent, ApiUpdateTravelAgent}
+import ua.kpi.ipsa.domain.types._
+import ua.kpi.ipsa.dto._
+import ua.kpi.ipsa.route.TravelAgentRoute.ListQueryParams
 import ua.kpi.ipsa.route.middleware.syntax._
 import ua.kpi.ipsa.service.TravelAgentService
 import ua.kpi.ipsa.service.convert.TravelAgentConverter._
@@ -37,21 +38,20 @@ object TravelAgentRoute {
         oneOfMappingFromMatchType(StatusCode.NotFound, jsonBody[NotFound].description("not found"))
       )
     )
-  private val listE: Endpoint[(List[TravelAgentId], Option[QueryLimit], Ctx), Unit, List[ApiTravelAgent], Any] = endpoint.get
-    .in("api" / "v1.0" / "travel_agent")
-    .out(jsonBody[List[ApiTravelAgent]])
-    .in(query[List[TravelAgentId]]("id"))
-//    .in(query[List[String]]("name"))
-    //    .in(query[List[String]]("nameLike"))
-    //    .in(query[List[String]]("country"))
-    //    .in(query[List[String]]("city"))
-    //    .in(query[List[String]]("photo"))
-    //    .in(query[List[Int]]("stars"))
-    .in(query[Option[QueryLimit]]("limit"))
-    .withRequestContext()
-  //    locations: Set[ApiLocation],
-  //    photos: List[String],
-  //    hotelStarCategory: Set[ApiHotelStarCategory]
+  type ListQueryParams = (List[TravelAgentId], List[TravelAgentName], List[TravelAgentCountry], List[TravelAgentCity], List[TravelAgentPhoto], List[HotelStars], Option[QueryLimit], Ctx)
+  private val listE: Endpoint[ListQueryParams, Unit, List[ApiTravelAgent], Any] =
+    endpoint.get
+      .in("api" / "v1.0" / "travel_agent")
+      .out(jsonBody[List[ApiTravelAgent]])
+      .in(query[List[TravelAgentId]]("id"))
+      .in(query[List[TravelAgentName]]("name"))
+      .in(query[List[TravelAgentCountry]]("country"))
+      .in(query[List[TravelAgentCity]]("city"))
+      .in(query[List[TravelAgentPhoto]]("photo"))
+      .in(query[List[HotelStars]]("stars"))
+      .in(query[Option[QueryLimit]]("limit"))
+      .withRequestContext()
+
   private val deleteE: Endpoint[(TravelAgentId, Ctx), NotFound, Unit, Any] = endpoint.delete
     .in("api" / "v1.0" / "travel_agent" / path[TravelAgentId]("id"))
     .out(emptyOutput)
@@ -86,7 +86,7 @@ object TravelAgentRoute {
 trait TravelAgentRouteService {
   def create(input: (ApiCreateTravelAgent, Ctx)): Task[Either[Conflict, ApiTravelAgent]]
   def get(input: (TravelAgentId, Ctx)): Task[Either[NotFound, ApiTravelAgent]]
-  def list(input: (List[TravelAgentId], Option[QueryLimit], Ctx)): Task[Either[Unit, List[ApiTravelAgent]]]
+  def list(input: ListQueryParams): Task[Either[Unit, List[ApiTravelAgent]]]
   def delete(input: (TravelAgentId, Ctx)): Task[Either[NotFound, Unit]]
   def update(input: (TravelAgentId, ApiUpdateTravelAgent, Ctx)): Task[Either[NotFound, ApiTravelAgent]]
 }
@@ -108,10 +108,10 @@ class TravelAgentRouteServiceLive(service: TravelAgentService) extends TravelAge
       case None    => Left(notFound(id))
     }
   }
-  override def list(input: (List[TravelAgentId], Option[QueryLimit], Ctx)): Task[Either[Unit, List[ApiTravelAgent]]] = {
-    val (ids, queryLimit, ctx) = input
+  override def list(input: ListQueryParams): Task[Either[Unit, List[ApiTravelAgent]]] = {
+    val (ids, namesIn, countriesIn, citiesIn, photosIn, hotelStarsIn, queryLimit, ctx) = input
     for {
-      filter <- ZIO.succeed(toListTravelAgentFilter(ids, queryLimit))
+      filter <- ZIO.succeed(toListTravelAgentFilter(ids, namesIn, countriesIn, citiesIn, photosIn, hotelStarsIn, queryLimit))
       res    <- service.list(filter)(ctx)
     } yield Right(res.map(toApiTravelAgent))
   }

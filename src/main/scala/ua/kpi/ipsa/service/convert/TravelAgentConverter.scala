@@ -27,19 +27,32 @@ object TravelAgentConverter {
       hotelStarCategories = cmd.hotelStarCategories.map(_.value)
     )
   }
-  def toListTravelAgentFilter(ids: List[TravelAgentId], queryLimit: Option[QueryLimit]): ListTravelAgentFilter = {
+  def toListTravelAgentFilter(
+      ids: List[TravelAgentId],
+      namesIn: List[TravelAgentName],
+      countriesIn: List[TravelAgentCountry],
+      citiesIn: List[TravelAgentCity],
+      photosIn: List[TravelAgentPhoto],
+      hotelStarsIn: List[HotelStars],
+      queryLimit: Option[QueryLimit]
+  ): ListTravelAgentFilter = {
     ListTravelAgentFilter(
-      ids   = ids.map(_.value).toNel,
-      limit = queryLimit.map(_.value)
+      ids          = ids.map(_.value).distinct.toNel,
+      namesIn      = namesIn.map(_.value).distinct.toNel,
+      countriesIn  = countriesIn.map(_.value).distinct.toNel,
+      citiesIn     = citiesIn.map(_.value).distinct.toNel,
+      photosIn     = photosIn.map(_.value).distinct.toNel,
+      hotelStarsIn = hotelStarsIn.map(_.value).distinct.toNel,
+      queryLimit   = queryLimit.map(_.value)
     )
   }
   def toApiTravelAgent(r: TravelAgent): ApiTravelAgent = {
     ApiTravelAgent(
-      id                = TravelAgentId(r.id),
-      name              = TravelAgentName(r.name),
-      locations         = r.locations.map(toApiLocation).toSet,
-      photos            = r.photos.map(TravelAgentPhoto(_)),
-      hotelStarCategory = r.hotelStarCategory.map(toApiHotelStarCategory).toSet
+      id                  = TravelAgentId(r.id),
+      name                = TravelAgentName(r.name),
+      locations           = r.locations.map(toApiLocation).toSet,
+      photos              = r.photos.map(TravelAgentPhoto(_)),
+      hotelStarCategories = r.hotelStarCategory.map(toApiHotelStarCategory).toSet
     )
   }
 }

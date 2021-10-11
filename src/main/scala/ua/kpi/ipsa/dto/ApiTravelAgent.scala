@@ -8,7 +8,7 @@ case class ApiTravelAgent(
     name: TravelAgentName,
     locations: Set[ApiLocation],
     photos: List[TravelAgentPhoto],
-    hotelStarCategory: Set[ApiHotelStarCategory]
+    hotelStarCategories: Set[ApiHotelStarCategory]
 )
 object ApiTravelAgent {
   implicit val decoder: JsonDecoder[ApiTravelAgent] = DeriveJsonDecoder.gen[ApiTravelAgent]
