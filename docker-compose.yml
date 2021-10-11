@@ -10,7 +10,7 @@ services:
     ports:
       - 15432:5432
   migration_tourism:
-    image: boxfuse/flyway:latest
+    image: flyway/flyway:latest
     container_name: flyway_migration
     volumes:
       - ./src/main/resources/migrations:/flyway/sql
