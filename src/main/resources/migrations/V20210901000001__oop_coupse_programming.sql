@@ -9,7 +9,7 @@ CREATE TABLE hotel_starts_categories
 CREATE TABLE locations
 (
     id            bigserial primary key,
-    name          text          not null,
+    name          text not null,
     location_type text not null,
     parent_id     bigint,
     FOREIGN KEY (parent_id) REFERENCES locations (id)
@@ -41,3 +41,15 @@ CREATE TABLE travel_agent_categories
     FOREIGN KEY (hotel_star_category_id) REFERENCES hotel_starts_categories (id)
 );
 create unique index travel_agent_categories_idx on travel_agent_categories using btree (travel_agent_id, hotel_star_category_id);
+
+CREATE TABLE travel_voucher
+(
+    id                 bigserial primary key,
+    travel_agent_id    bigint    not null,
+    created_at         timestamp not null,
+    updated_at         timestamp not null,
+    voucher_start_date timestamp not null,
+    voucher_end_date   timestamp not null,
+    users              json[]    not null,
+    FOREIGN KEY (travel_agent_id) REFERENCES travel_agent (id)
+);

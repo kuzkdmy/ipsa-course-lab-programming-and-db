@@ -12,7 +12,7 @@ import zio.duration.durationInt
 import zio.interop.catz._
 import zio.json.{DecoderOps, JsonDecoder}
 import zio.test.{DefaultRunnableSpec, TestAspect}
-import zio.{Has, IO, RManaged, Schedule, Task, TaskManaged, ZIO, ZManaged}
+import zio.{Has, RManaged, Schedule, Task, TaskManaged, ZIO, ZManaged}
 
 import scala.util.Try
 
@@ -45,6 +45,6 @@ trait BaseFunTest extends DefaultRunnableSpec {
       })
   }
 
-  def as[T](response: Response[String])(implicit A: JsonDecoder[T]): IO[String, T] =
-    ZIO.fromEither(response.body.fromJson[T].left.map(_ => s"failed construct from: ${response}"))
+  def as[T](response: Response[String])(implicit A: JsonDecoder[T]): Task[T] =
+    ZIO(response.body.fromJson[T].getOrElse(throw new RuntimeException(s"failed construct from: ${response}")))
 }

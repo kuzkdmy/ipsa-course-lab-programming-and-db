@@ -105,7 +105,7 @@ object TravelAgentFunctionalTest extends BaseFunTest {
                   .body(
                     ApiCreateTravelAgent(
                       name                = TravelAgentName("travel agent 007"),
-                      photos              = List(TravelAgentPhoto("photo 1"), TravelAgentPhoto("photo 2")),
+                      photos              = List(TravelAgentPhoto("PhoTO 1"), TravelAgentPhoto("photo 2")),
                       locations           = Set(usa.id, canada.id),
                       hotelStarCategories = Set(hotelStar.id)
                     ).toJson
@@ -126,7 +126,7 @@ object TravelAgentFunctionalTest extends BaseFunTest {
           res1 <- c.get(baseUri.addParams("country" -> "canada")).send(b).flatMap(asTravelAgentsList)
           res2 <- c.get(baseUri.addParams("city" -> "NewYork")).send(b).flatMap(asTravelAgentsList)
           res3 <- c.get(baseUri.addParams("stars" -> "5")).send(b).flatMap(asTravelAgentsList)
-          res4 <- c.get(baseUri.addParams("stars" -> "5", "photo" -> "photo 1")).send(b).flatMap(asTravelAgentsList)
+          res4 <- c.get(baseUri.addParams("stars" -> "5", "photo" -> "PHOTO 1")).send(b).flatMap(asTravelAgentsList)
         } yield {
           assert(res1)(equalTo(List(c1))) &&
           assert(res2)(equalTo(List(c2))) &&
@@ -137,10 +137,10 @@ object TravelAgentFunctionalTest extends BaseFunTest {
     }
   )
 
-  private val baseUri = uri"http://localhost:8093/api/v1.0/travel_agent"
-  def asTravelAgent(response: Response[String]): IO[String, ApiTravelAgent] =
+  val baseUri = uri"http://localhost:8093/api/v1.0/travel_agent"
+  def asTravelAgent(response: Response[String]): Task[ApiTravelAgent] =
     as[ApiTravelAgent](response)
-  private def asTravelAgentsList(response: Response[String]): IO[String, List[ApiTravelAgent]] =
+  private def asTravelAgentsList(response: Response[String]): Task[List[ApiTravelAgent]] =
     as[List[ApiTravelAgent]](response)
 
 }

@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.syntax.list._
 import cats.syntax.option._
 import doobie.implicits._
-import doobie.util.fragments.{in, whereAndOpt}
+import doobie.util.fragments.{in, whereAnd, whereAndOpt}
 import ua.kpi.ipsa.domain.Location
 import ua.kpi.ipsa.domain.filter.ListLocationsFilter
 import ua.kpi.ipsa.trace.Ctx
@@ -33,7 +33,7 @@ case class LocationRepositoryLive() extends LocationRepository {
     )
     for {
       ids <- (sql"SELECT distinct id FROM locations " ++ filterFragment ++ fr"ORDER BY id " ++ filter.limit.map(l => fr"LIMIT $l").getOrElse(fr"")).query[Long].to[Set]
-      res <- (sql"SELECT id, name, location_type, parent_id FROM locations " ++ whereAndOpt(ids.toList.toNel.map(ids => in(fr"id", ids)))).query[Location].to[List]
+      res <- (sql"SELECT id, name, location_type, parent_id FROM locations " ++ whereAnd(ids.toList.toNel.fold(fr" false")(ids => in(fr"id", ids)))).query[Location].to[List]
     } yield res
   }
 

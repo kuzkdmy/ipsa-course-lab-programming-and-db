@@ -95,9 +95,9 @@ object LocationsFunctionalTest extends BaseFunTest {
   )
 
   val baseUri = uri"http://localhost:8093/api/v1.0/location"
-  private def asLocation(response: Response[String]): IO[String, ApiLocation] =
+  private def asLocation(response: Response[String]): Task[ApiLocation] =
     as[ApiLocation](response)
-  private def asLocationsList(response: Response[String]): IO[String, List[ApiLocation]] =
+  private def asLocationsList(response: Response[String]): Task[List[ApiLocation]] =
     as[List[ApiLocation]](response)
 
 }

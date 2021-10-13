@@ -40,7 +40,7 @@ object HotelStarsRoute {
   private val listE: Endpoint[(List[HotelStarCategoryId], Option[QueryLimit], Ctx), Unit, List[ApiHotelStarCategory], Any] = endpoint.get
     .in("api" / "v1.0" / "hotel_stars")
     .out(jsonBody[List[ApiHotelStarCategory]])
-    .in(query[List[HotelStarCategoryId]]("ids"))
+    .in(query[List[HotelStarCategoryId]]("id"))
     .in(query[Option[QueryLimit]]("limit"))
     .withRequestContext()
   private val deleteE: Endpoint[(HotelStarCategoryId, Ctx), NotFound, Unit, Any] = endpoint.delete

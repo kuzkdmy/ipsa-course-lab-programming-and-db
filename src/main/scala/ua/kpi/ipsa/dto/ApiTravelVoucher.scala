@@ -3,38 +3,51 @@ package ua.kpi.ipsa.dto
 import ua.kpi.ipsa.domain.types._
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime}
 
 case class ApiTravelVoucher(
-    travelAgent: TravelAgentName,
-    tripDate: LocalDateTime,
-    travelDays: Int,
-    user: List[ApiUser]
+    id: TravelVoucherId,
+    travelAgentId: TravelAgentId,
+    createdAt: LocalDateTime,
+    updatedAt: LocalDateTime,
+    voucherStartDate: LocalDateTime,
+    voucherEndDate: LocalDateTime,
+    users: List[ApiTravelVoucherUser]
 )
 object ApiTravelVoucher {
   implicit val decoder: JsonDecoder[ApiTravelVoucher] = DeriveJsonDecoder.gen[ApiTravelVoucher]
   implicit val encoder: JsonEncoder[ApiTravelVoucher] = DeriveJsonEncoder.gen[ApiTravelVoucher]
 }
 
-case class ApiUser(id: UserId, firstName: UserFirstName, lastName: UserLastName)
-object ApiUser {
-  implicit val decoder: JsonDecoder[ApiUser] = DeriveJsonDecoder.gen[ApiUser]
-  implicit val encoder: JsonEncoder[ApiUser] = DeriveJsonEncoder.gen[ApiUser]
-}
-case class ApiTravelVoucherList(
-    data: List[ApiTravelVoucherListEntry]
+case class ApiTravelVoucherUser(
+    firstName: UserFirstName,
+    lastName: UserLastName,
+    birthDay: LocalDate,
+    passportNumber: Option[UserPassportNumber]
 )
-object ApiTravelVoucherList {
-  implicit val decoder: JsonDecoder[ApiTravelVoucherList] = DeriveJsonDecoder.gen[ApiTravelVoucherList]
-  implicit val encoder: JsonEncoder[ApiTravelVoucherList] = DeriveJsonEncoder.gen[ApiTravelVoucherList]
+object ApiTravelVoucherUser {
+  implicit val decoder: JsonDecoder[ApiTravelVoucherUser] = DeriveJsonDecoder.gen[ApiTravelVoucherUser]
+  implicit val encoder: JsonEncoder[ApiTravelVoucherUser] = DeriveJsonEncoder.gen[ApiTravelVoucherUser]
 }
-case class ApiTravelVoucherListEntry(
-    travelAgent: String,
-    tripDate: LocalDateTime,
-    travelDays: Int,
-    user: List[UserId]
+
+case class ApiCreateTravelVoucher(
+    travelAgentId: TravelAgentId,
+    voucherStartDate: LocalDateTime,
+    voucherEndDate: LocalDateTime,
+    users: List[ApiTravelVoucherUser]
 )
-object ApiTravelVoucherListEntry {
-  implicit val decoder: JsonDecoder[ApiTravelVoucherListEntry] = DeriveJsonDecoder.gen[ApiTravelVoucherListEntry]
-  implicit val encoder: JsonEncoder[ApiTravelVoucherListEntry] = DeriveJsonEncoder.gen[ApiTravelVoucherListEntry]
+object ApiCreateTravelVoucher {
+  implicit val decoder: JsonDecoder[ApiCreateTravelVoucher] = DeriveJsonDecoder.gen[ApiCreateTravelVoucher]
+  implicit val encoder: JsonEncoder[ApiCreateTravelVoucher] = DeriveJsonEncoder.gen[ApiCreateTravelVoucher]
+}
+
+case class ApiUpdateTravelVoucher(
+    travelAgentId: TravelAgentId,
+    voucherStartDate: LocalDateTime,
+    voucherEndDate: LocalDateTime,
+    users: List[ApiTravelVoucherUser]
+)
+object ApiUpdateTravelVoucher {
+  implicit val decoder: JsonDecoder[ApiUpdateTravelVoucher] = DeriveJsonDecoder.gen[ApiUpdateTravelVoucher]
+  implicit val encoder: JsonEncoder[ApiUpdateTravelVoucher] = DeriveJsonEncoder.gen[ApiUpdateTravelVoucher]
 }

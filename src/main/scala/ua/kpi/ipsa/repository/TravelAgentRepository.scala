@@ -9,7 +9,7 @@ import doobie.free.connection
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.fragment.Fragment.const
-import doobie.util.fragments.{and, in, whereAndOpt}
+import doobie.util.fragments.{and, in, whereAnd, whereAndOpt}
 import ua.kpi.ipsa.domain.filter.ListTravelAgentFilter
 import ua.kpi.ipsa.domain.{TravelAgentQueryListRow, TravelAgentRepr, TravelAgentRow}
 import ua.kpi.ipsa.trace.Ctx
@@ -41,7 +41,7 @@ case class TravelAgentRepositoryLive() extends TravelAgentRepository {
       filter.namesIn.map(e => in(fr"lower(t.name)", e.map(_.toLowerCase))),
       filter.countriesIn.map(e => and(fr"l.location_type='country'", in(fr"lower(l.name)", e.map(_.toLowerCase)))),
       filter.citiesIn.map(e => and(fr"l.location_type='city'", in(fr"lower(l.name)", e.map(_.toLowerCase)))),
-      filter.photosIn.map(e => fr"lower(t.photos::text)::text[] && " ++ fr0"'{" ++ const(e.toList.intercalate(",")) ++ fr"}'"),
+      filter.photosIn.map(e => fr"lower(t.photos::text)::text[] && " ++ fr0"'{" ++ const(e.toList.map(_.toLowerCase).intercalate(",")) ++ fr"}'"),
       filter.hotelStarsIn.map(e => in(fr"s.stars", e))
     )
     tzio {
@@ -58,7 +58,7 @@ case class TravelAgentRepositoryLive() extends TravelAgentRepository {
         dataTups <- (sql"""SELECT t.id, t.name, t.photos, tc.hotel_star_category_id, tl.location_id FROM travel_agent t
                       LEFT JOIN travel_agent_categories tc ON t.id = tc.travel_agent_id
                       LEFT JOIN travel_agent_locations tl ON t.id = tl.travel_agent_id """ ++
-                      whereAndOpt(ids.toList.toNel.map(ids => in(fr"t.id", ids))) ++ fr" ORDER BY t.id ").query[TravelAgentQueryListRow].to[List]
+                      whereAnd(ids.toList.toNel.fold(fr" false")(ids => in(fr"t.id", ids)))++ fr" ORDER BY t.id ").query[TravelAgentQueryListRow].to[List]
       } yield {
         dataTups
           .groupBy(_.id)

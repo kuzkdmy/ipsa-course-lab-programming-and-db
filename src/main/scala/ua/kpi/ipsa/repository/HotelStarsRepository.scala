@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.implicits.catsSyntaxOptionId
 import cats.syntax.list._
 import doobie.implicits._
-import doobie.util.fragments.{in, whereAndOpt}
+import doobie.util.fragments.{in, whereAnd, whereAndOpt}
 import ua.kpi.ipsa.domain.HotelStarCategory
 import ua.kpi.ipsa.domain.filter.ListHotelCategoriesFilter
 import ua.kpi.ipsa.trace.Ctx
@@ -33,7 +33,7 @@ case class HotelStarsRepositoryLive() extends HotelStarsRepository {
     )
     for {
       ids <- (sql"SELECT distinct id FROM hotel_starts_categories " ++ filterFragment ++ fr" ORDER BY id " ++ filter.limit.map(l => fr" LIMIT $l").getOrElse(fr"")).query[Long].to[Set]
-      res <- (sql"SELECT id, stars, description, region FROM hotel_starts_categories " ++ whereAndOpt(ids.toList.toNel.map(ids => in(fr" id", ids)))).query[HotelStarCategory].to[List]
+      res <- (sql"SELECT id, stars, description, region FROM hotel_starts_categories " ++ whereAnd(ids.toList.toNel.fold(fr" false")(ids => in(fr" id", ids)))).query[HotelStarCategory].to[List]
     } yield res
   }
 

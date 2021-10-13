@@ -40,7 +40,7 @@ object LocationRoute {
   private val listE: Endpoint[(List[LocationId], Option[QueryLimit], Ctx), Unit, List[ApiLocation], Any] = endpoint.get
     .in("api" / "v1.0" / "location")
     .out(jsonBody[List[ApiLocation]])
-    .in(query[List[LocationId]]("ids"))
+    .in(query[List[LocationId]]("id"))
     .in(query[Option[QueryLimit]]("limit"))
     .withRequestContext()
   private val deleteE: Endpoint[(LocationId, Ctx), NotFound, Unit, Any] = endpoint.delete

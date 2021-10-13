@@ -89,9 +89,9 @@ object HotelStarsFunctionalTest extends BaseFunTest {
   val baseUri             = uri"http://localhost:8093/api/v1.0/hotel_stars"
   private val stars5      = HotelStars(5)
   private val egyptRegion = HotelStarRegion("Egypt")
-  private def asHotel(response: Response[String]): IO[String, ApiHotelStarCategory] =
+  private def asHotel(response: Response[String]): Task[ApiHotelStarCategory] =
     as[ApiHotelStarCategory](response)
-  private def asHotelList(response: Response[String]): IO[String, List[ApiHotelStarCategory]] =
+  private def asHotelList(response: Response[String]): Task[List[ApiHotelStarCategory]] =
     as[List[ApiHotelStarCategory]](response)
 
 }
