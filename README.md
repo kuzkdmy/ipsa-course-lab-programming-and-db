@@ -9,7 +9,7 @@
 - [zio-http](https://dream11.github.io/zio-http/)
 - [tapir](https://tapir.softwaremill.com/en/latest/index.html)
 - [doobie](https://tpolecat.github.io/doobie/)
-- [tofu](tf.tofu)
+- [tofu](https://docs.tofu.tf/docs/start.html)
 
 #### How to check work(test/run)
 
@@ -19,7 +19,8 @@
 - verification via test <br>
   ```sbt test``` <br>
   or install ZIO plugin and run as regular test(note Intellij plugin ignore zio-test aspects)
-- manual run `MainApp` all configs target to local infrastructure, so it can start without any tricks with env variables
+- manual run `MainApp` all configs target to local infrastructure, so it can start without any tricks with env variables <br>
+[application swagger docs](http://localhost:8093/docs)
 
 #### Requirements RU/UA link
 
