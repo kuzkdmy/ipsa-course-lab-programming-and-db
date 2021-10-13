@@ -1,27 +1,50 @@
-#### TODO
-- check swagger docs endpoint work
-- did not figure out with prometheus metrics correct setup
-- x-request-id should be a part of response header
+#### This is a mix for 2 course labs in 'National Technical University of Ukraine “Igor Sikorsky Kyiv Polytechnic Institute”'
 
-#### How to check this work(test/run)
-- ```bash docker-compose up -d``` 
-- verification via test ```bash sbt test``` or install ZIO plugin and run as regular test
-- manual run `MainApp` all configs target so it can start without any tricks with env variables
-
-#### This is a mix for 2 ipsa course labs
-- OOP programming(done in Scala, app is just simple CRUD(storage in db), 
+- OOP programming(done in Scala, app is just simple CRUD(storage in db),
 - Databases work and design
 
-#### NOTE. Will never add this on real project, but for course lab demo there exists 
-- foreign keys constraints 
-- insert constraint check, that references other tables 
-- triggers
+#### Core libraries used
 
-#### RU/UA link
+- [zio](https://zio.dev/)
+- [zio-http](https://dream11.github.io/zio-http/)
+- [tapir](https://tapir.softwaremill.com/en/latest/index.html)
+- [doobie](https://tpolecat.github.io/doobie/)
+- [tofu](tf.tofu)
 
+#### How to check work(test/run)
 
-#### DB requirements
+- ```docker-compose up -d``` <br>
+  will pull required docker images to run application <br>
+  automatically await postgres db start and apply database migrations
+- verification via test <br>
+  ```sbt test``` <br>
+  or install ZIO plugin and run as regular test(note Intellij plugin ignore zio-test aspects)
+- manual run `MainApp` all configs target to local infrastructure, so it can start without any tricks with env variables
 
+#### Requirements RU/UA link
 
-#### OOP programming requirements
+- [oop course link](README_OOP_UA.md)
+- [db course link](README_DB_UA.md)
 
+#### Requirements US link
+
+- todo, can be done with Google Translate from Ukrainian to English
+
+#### Bonus level programming
+
+- `x-request-id` middleware
+- MDC logging with `x-request-id` <br>
+  (wait for ZIO2, if ZIO.log(...) will be able to work with some context)
+
+#### TODO
+
+- prometheus metrics export endpoint(enrich docker-compose with grafana and prometheus)
+- doobie tofu logs, introduce better logging on errors
+- doobie newType don't derive List[NewTypeClass] need to create explicit List read/write
+- json web token integration
+- http client research forced by contract x-request-id(zio-grpc is good it has layer to force context)
+- double check doobie blocking/nonBlocking pools
+- api converters from api to domain classes should convert to ZIO[_ , ValidationError, T] (maybe `wix accord`, but they
+  don't work by F[_])
+- check how tapir works when there will be > 22 filters, they are tuples
+- introduce docker-containers in tests

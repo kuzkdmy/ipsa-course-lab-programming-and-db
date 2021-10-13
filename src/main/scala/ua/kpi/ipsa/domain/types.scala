@@ -12,7 +12,6 @@ import java.time.LocalDate
 
 object types {
   implicit private val localDayShow: Show[LocalDate] = e => e.toString
-  // doobie derive not works correctly for db array types)
   @derive(show, schema, encoder, decoder) @newtype case class HotelStarCategoryId(value: Long)
   @derive(show, schema, encoder, decoder) @newtype case class HotelStars(value: Int)
   @derive(show, schema, encoder, decoder) @newtype case class HotelStarDescription(value: String)

@@ -2,6 +2,9 @@ ThisBuild / scalaVersion := "2.13.6"
 ThisBuild / organization := "ua.kpi.ipsa"
 ThisBuild / organizationName := "ipsa"
 
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
+ThisBuild / parallelExecution := false
+
 lazy val root = (project in file("."))
   .settings(
     name := "ipsa-course-1",
